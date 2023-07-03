@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "gpt-pl"
+version = "0.1.0"
+description = ""
+authors = ["HSJeong5744 <jhs0256@gmail.com>"]
+readme = "README.md"
+packages = [{include = "gpt_pl"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+hydra-core = "^1.3.2"
+lightning = "^2.0.4"
+pandas = "^2.0.3"
+wandb = "^0.15.4"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+pre-commit = "^3.3.3"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
