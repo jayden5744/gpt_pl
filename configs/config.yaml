@@ -1,0 +1,4 @@
+defaults:
+  - data: default
+  - model: gpt
+  - trainer: default
