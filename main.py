@@ -1,16 +1,17 @@
 import os
-from typing import Dict
+from typing import Dict, Tuple
 import hydra
 from omegaconf import DictConfig
 from hydra.utils import get_original_cwd
 
+import lightning.pytorch as pl
 from lightning.pytorch import Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import WandbLogger
-from src.dataset import PretrainDataModule
+from src.data_modules import PretrainDataModule, NaverClassificationDataModule
 
-from src.train import GPTPretrainModel
+from src.train import GPTPretrainModel, NaverClassificationModel
 
 def make_config(cfg: DictConfig) -> Dict:
     result = {}
@@ -20,16 +21,38 @@ def make_config(cfg: DictConfig) -> Dict:
     return result
 
 
+def get_model_n_data_module(cfg) -> Tuple[pl.LightningModule, pl.LightningDataModule]:
+    if cfg.data.task == "pretrain":
+        model = GPTPretrainModel(arg=cfg)
+
+        data_module = PretrainDataModule(
+            arg_data=cfg.data,
+            arg_model=cfg.model,
+            vocab=model.vocab,
+            batch_size=cfg.trainer.batch_size
+        )
+
+    elif cfg.data.task == "classification":
+        model = NaverClassificationModel(arg=cfg)
+        model.model.gpt.load(cfg.data.pretrain_path)
+
+        data_module = NaverClassificationDataModule(
+            arg_data=cfg.data,
+            arg_model=cfg.model,
+            vocab=model.vocab,
+            batch_size=cfg.trainer.batch_size
+        )
+    else:
+        raise ValueError()
+    return model, data_module
+
+
+
+
 @hydra.main(version_base="1.3.2", config_path="configs", config_name="config")
 def train(cfg: DictConfig) -> None:
-    model = GPTPretrainModel(arg=cfg)
 
-    data_module = PretrainDataModule(
-        arg_data=cfg.data,
-        arg_model=cfg.model,
-        vocab=model.vocab,
-        batch_size=cfg.trainer.batch_size
-    )
+    model, data_module = get_model_n_data_module(cfg)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=os.path.join(get_original_cwd(), "./SavedModel/"),

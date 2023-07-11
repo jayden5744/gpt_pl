@@ -1,4 +1,4 @@
 defaults:
-  - data: default
-  - model: gpt
+  - data: classification
+  - model: classification
   - trainer: default
