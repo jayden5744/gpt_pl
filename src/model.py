@@ -97,9 +97,7 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(
-        self, d_hidden: int, n_heads: int,  dropout: float = 0
-    ) -> None:
+    def __init__(self, d_hidden: int, n_heads: int, dropout: float = 0) -> None:
         super().__init__()
         assert d_hidden // n_heads != 0
         head_dim = int(d_hidden / n_heads)
@@ -268,15 +266,14 @@ class Decoder(nn.Module):
         dec_self_attn_mask = (
             padding_mask + look_ahead_mask
         )  # decoder 1번째 attention에 들어가는 mask
-        
+
         dec_outputs = conb_emb
         for layer in self.layers:
             dec_ouputs = layer(
                 dec_outputs, dec_self_attn_mask
             )  # => [bs, max_seq_size, d_hidden]
-        
-        return dec_ouputs
 
+        return dec_ouputs
 
 
 class GPT(nn.Module):
@@ -289,8 +286,8 @@ class GPT(nn.Module):
         ff_dim: int,
         max_sequence_size: int,
         padding_id: int,
-        dropout_rate: float
-        ) -> None:
+        dropout_rate: float,
+    ) -> None:
         super().__init__()
         self.decoder = Decoder(
             input_dim=vocab_size,
@@ -300,9 +297,8 @@ class GPT(nn.Module):
             ff_dim=ff_dim,
             max_sequence_size=max_sequence_size,
             padding_id=padding_id,
-            dropout=dropout_rate
+            dropout=dropout_rate,
         )
 
     def forward(self, dec_inputs: Tensor) -> Tensor:
         return self.decoder(dec_inputs)
-        

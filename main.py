@@ -1,18 +1,18 @@
 import os
 from typing import Dict, Tuple
-import hydra
-from omegaconf import DictConfig
-from hydra.utils import get_original_cwd
 
-import torch
+import hydra
 import lightning.pytorch as pl
+import torch
+from hydra.utils import get_original_cwd
 from lightning.pytorch import Trainer
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import WandbLogger
+from omegaconf import DictConfig
 
-from src.data_modules import PretrainDataModule
-from src.train import GPTPretrainModule
+from src.data_modules import NaverClassificationDataModule, PretrainDataModule
+from src.train import GPTPretrainModule, NaverClassificationModule
 
 
 def make_config(cfg: DictConfig) -> Dict:
@@ -22,14 +22,39 @@ def make_config(cfg: DictConfig) -> Dict:
     result.update(dict(cfg.trainer))
     return result
 
-    
+
+def get_model_n_data_module(cfg) -> Tuple[pl.LightningModule, pl.LightningDataModule]:
+    if cfg.data.task == "pretrain":
+        module = GPTPretrainModule(arg=cfg)
+        data_module = PretrainDataModule(
+            arg_data=cfg.data,
+            arg_model=cfg.model,
+            vocab=module.vocab,
+            batch_size=cfg.trainer.batch_size,
+        )
+
+    elif cfg.data.task == "classification":
+        module = NaverClassificationModule(arg=cfg)
+        data_module = NaverClassificationDataModule(
+            arg_data=cfg.data,
+            arg_model=cfg.model,
+            vocab=module.vocab,
+            batch_size=cfg.trainer.batch_size,
+        )
+
+    else:
+        raise ValueError
+    return module, data_module
+
+
 @hydra.main(version_base="1.3.2", config_path="configs", config_name="config")
 def train(cfg: DictConfig) -> None:
-    module = GPTPretrainModule(arg=cfg)
-    data_module = PretrainDataModule(arg_data=cfg.data, arg_model=cfg.model, vocab=module.vocab, batch_size=cfg.trainer.batch_size)
+    module, data_module = get_model_n_data_module(cfg)
 
     checkpoint_callback = ModelCheckpoint(
-        dirpath=os.path.join(get_original_cwd(), f"./SavedModel/{cfg.data.folder_name}"),
+        dirpath=os.path.join(
+            get_original_cwd(), f"./SavedModel/{cfg.data.folder_name}"
+        ),
         filename=cfg.data.folder_name,
         save_top_k=5,
         verbose=True,
@@ -51,7 +76,7 @@ def train(cfg: DictConfig) -> None:
         accelerator="auto",
         max_epochs=cfg.trainer.epochs,
         callbacks=[checkpoint_callback, early_stop_callback],
-        strategy='ddp_find_unused_parameters_true'
+        strategy="ddp_find_unused_parameters_true"
         # logger=wandb_logger,
     )
     trainer.fit(model=module, datamodule=data_module)

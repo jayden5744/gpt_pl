@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import shutil
+
 import sentencepiece as spm
 
 
@@ -19,7 +20,7 @@ def create_or_load_tokenizer(
     bos_token: str = "[BOS]",
     eos_token: str = "[EOS]",
     unk_token: str = "[UNK]",
-    pad_token: str = "[PAD]"
+    pad_token: str = "[PAD]",
 ) -> spm.SentencePieceProcessor:
     corpus_prefix = f"{language}_corpus_{vocab_size}"
 
