@@ -1,0 +1,4 @@
+classification:
+  - data: classification
+  - model: classification
+  - trainer: classification

@@ -1,0 +1,4 @@
+pretrain:
+  - data: pretrain
+  - model: pretrain
+  - trainer: pretrain
