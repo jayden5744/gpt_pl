@@ -10,6 +10,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
+from src.callbacks import SelectedLayerCheckpoint
 
 from src.data_modules import NaverClassificationDataModule, PretrainDataModule
 from src.train import GPTPretrainModule, NaverClassificationModule
@@ -47,9 +48,15 @@ def get_model_n_data_module(cfg) -> Tuple[pl.LightningModule, pl.LightningDataMo
     return module, data_module
 
 
-@hydra.main(version_base="1.3.2", config_path="configs", config_name="config")
+@hydra.main(version_base="1.3.2", config_path="configs", config_name="classification")
 def train(cfg: DictConfig) -> None:
+    callback_lst = []
     module, data_module = get_model_n_data_module(cfg)
+
+    if cfg.data.task == "pretrain":
+        selected_layer_checkpoint_callback = SelectedLayerCheckpoint()
+        callback_lst.append(selected_layer_checkpoint_callback)
+
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=os.path.join(
@@ -68,6 +75,7 @@ def train(cfg: DictConfig) -> None:
         verbose=False,
         mode="min",
     )
+    callback_lst.append(checkpoint_callback, early_stop_callback)
     # wandb_logger = WandbLogger(project=cfg.data.project_name, name=cfg.data.folder_name)
     # wandb_logger.log_hyperparams(make_config(cfg))
 
@@ -75,7 +83,7 @@ def train(cfg: DictConfig) -> None:
         devices="auto",
         accelerator="auto",
         max_epochs=cfg.trainer.epochs,
-        callbacks=[checkpoint_callback, early_stop_callback],
+        callbacks=callback_lst,
         strategy="ddp_find_unused_parameters_true"
         # logger=wandb_logger,
     )
