@@ -1,12 +1,12 @@
 import multiprocessing
-from omegaconf import DictConfig
-
-import sentencepiece as spm
-from torch.utils.data import  DataLoader, RandomSampler
 import lightning.pytorch as pl
-from lightning.pytorch.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
+import sentencepiece as spm
+from lightning.pytorch.utilities.types import (EVAL_DATALOADERS,
+                                               TRAIN_DATALOADERS)
+from omegaconf import DictConfig
+from torch.utils.data import DataLoader, RandomSampler
 
-from src.datasets import GPTPretrainDataset, NaverClassificationDataset
+from src.dataset import GPTPretrainDataset, NaverClassifcationDataset
 
 
 class AbstractDataModule(pl.LightningDataModule):
@@ -36,7 +36,7 @@ class AbstractDataModule(pl.LightningDataModule):
             dataset=self.train_dataset,
             sampler=train_sampler,
             batch_size=self.batch_size,
-            num_workers=multiprocessing.cpu_count()
+            num_workers=multiprocessing.cpu_count(),
         )
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
@@ -47,6 +47,7 @@ class AbstractDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=multiprocessing.cpu_count(),
             shuffle=False  # validation에서는 shuffle 하지 않는 것은 권장함
+            shuffle=False,  # validation에서는 shuffle 하지 않는 것은 권장함
         )
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
@@ -59,7 +60,7 @@ class AbstractDataModule(pl.LightningDataModule):
         return super().teardown(stage)
 
 
-class PretrainDataModule(pl.LightningDataModule):
+class PretrainDataModule(AbstractDataModule):
     def __init__(
         self,
         arg_data: DictConfig,
@@ -67,32 +68,33 @@ class PretrainDataModule(pl.LightningDataModule):
         vocab: spm.SentencePieceProcessor,
         batch_size: int,
     ) -> None:
-        super(AbstractDataModule).__init__(arg_data, arg_model, vocab, batch_size)
+        super().__init__(arg_data, arg_model, vocab, batch_size)
 
     def setup(self, stage: str) -> None:
+        # make assignments here (train/val/test split)
+        # called on every process in DDP(distributed data parallel)
         self.train_dataset = GPTPretrainDataset(
             file_path=self.arg_data.train_path,
             vocab=self.vocab,
             max_seq_len=self.max_seq_len,
-            bos_id=self.arg_model.bos_id,
-            eos_id=self.arg_model.eos_id,
-            unk_id=self.arg_model.unk_id,
-            pad_id=self.arg_model.pad_id,
+            bos_token=self.arg_model.bos_token,
+            eos_token=self.arg_model.eos_token,
+            unk_token=self.arg_model.unk_token,
+            pad_token=self.arg_model.pad_token,
         )
 
         self.valid_dataset = GPTPretrainDataset(
             file_path=self.arg_data.valid_path,
             vocab=self.vocab,
             max_seq_len=self.max_seq_len,
-            bos_id=self.arg_model.bos_id,
-            eos_id=self.arg_model.eos_id,
-            unk_id=self.arg_model.unk_id,
-            pad_id=self.arg_model.pad_id,
+            bos_token=self.arg_model.bos_token,
+            eos_token=self.arg_model.eos_token,
+            unk_token=self.arg_model.unk_token,
+            pad_token=self.arg_model.pad_token,
         )
 
 
-
-class NaverClassificationDataModule(pl.LightningDataModule):
+class NaverClassificationDataModule(AbstractDataModule):
     def __init__(
         self,
         arg_data: DictConfig,
@@ -100,26 +102,27 @@ class NaverClassificationDataModule(pl.LightningDataModule):
         vocab: spm.SentencePieceProcessor,
         batch_size: int,
     ) -> None:
-        super(AbstractDataModule).__init__(arg_data, arg_model, vocab, batch_size)
+        super().__init__(arg_data, arg_model, vocab, batch_size)
 
     def setup(self, stage: str) -> None:
-        self.train_dataset = NaverClassificationDataset(
+        # make assignments here (train/val/test split)
+        # called on every process in DDP(distributed data parallel)
+        self.train_dataset = NaverClassifcationDataset(
             file_path=self.arg_data.train_path,
             vocab=self.vocab,
             max_seq_len=self.max_seq_len,
-            bos_id=self.arg_model.bos_id,
-            eos_id=self.arg_model.eos_id,
-            unk_id=self.arg_model.unk_id,
-            pad_id=self.arg_model.pad_id,
+            bos_token=self.arg_model.bos_token,
+            eos_token=self.arg_model.eos_token,
+            unk_token=self.arg_model.unk_token,
+            pad_token=self.arg_model.pad_token,
         )
 
-        self.valid_dataset = NaverClassificationDataset(
+        self.valid_dataset = NaverClassifcationDataset(
             file_path=self.arg_data.valid_path,
             vocab=self.vocab,
             max_seq_len=self.max_seq_len,
-            bos_id=self.arg_model.bos_id,
-            eos_id=self.arg_model.eos_id,
-            unk_id=self.arg_model.unk_id,
-            pad_id=self.arg_model.pad_id,
+            bos_token=self.arg_model.bos_token,
+            eos_token=self.arg_model.eos_token,
+            unk_token=self.arg_model.unk_token,
+            pad_token=self.arg_model.pad_token,
         )
-        

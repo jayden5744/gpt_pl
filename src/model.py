@@ -49,12 +49,18 @@ def get_padding_mask(inputs: Tensor, padding_id: int) -> Tensor:
 
 def get_look_ahead_mask(inputs: Tensor) -> Tensor:
     """look ahead mask 생성 함수
+<<<<<<< HEAD
 
     자기 자신보다 미래에 있는 단어들을 참고할 수 없도록 마스킹하는 함수
 
     Args:
         dec_input (Tensor): 입력문장, [batch_size, seq_len]
 
+=======
+    자기 자신보다 미래에 있는 단어들을 참고할 수 없도록 마스킹하는 함수
+    Args:
+        dec_input (Tensor): 입력문장, [batch_size, seq_len]
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
     Returns:
         Tensor: _description_
     """
@@ -100,6 +106,7 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
+<<<<<<< HEAD
     def __init__(
         self, d_hidden: int, n_heads: int, dropout: float = 0
     ) -> None:
@@ -109,11 +116,24 @@ class MultiHeadAttention(nn.Module):
         self.weight_q = nn.Linear(d_hidden, n_heads * head_dim)
         self.weight_k = nn.Linear(d_hidden, n_heads * head_dim)
         self.weight_v = nn.Linear(d_hidden, n_heads * head_dim)
+=======
+    def __init__(self, d_hidden: int, n_heads: int, dropout: float = 0) -> None:
+        super().__init__()
+        assert d_hidden // n_heads != 0
+        head_dim = int(d_hidden / n_heads)
+        self.weight_q = nn.Linear(d_hidden, d_hidden)
+        self.weight_k = nn.Linear(d_hidden, d_hidden)
+        self.weight_v = nn.Linear(d_hidden, d_hidden)
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
 
         self.self_attention = ScaledDotProductAttention(
             head_dim=head_dim, dropout_rate=dropout
         )
+<<<<<<< HEAD
         self.linear = nn.Linear(n_heads * head_dim, d_hidden)
+=======
+        self.linear = nn.Linear(d_hidden, d_hidden)
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
 
         self.dropout = nn.Dropout(dropout)
         self.n_heads = n_heads
@@ -181,7 +201,11 @@ class PoswiseFeedForwardNet(nn.Module):
         self.layer1 = nn.Linear(d_hidden, ff_dim)
         self.layer2 = nn.Linear(ff_dim, d_hidden)
 
+<<<<<<< HEAD
         self.active = F.relu  # gelu
+=======
+        self.active = F.gelu  # gelu
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, inputs: Tensor) -> Tensor:
@@ -195,13 +219,21 @@ class DecoderLayer(nn.Module):
         self,
         d_hidden: int,
         n_heads: int,
+<<<<<<< HEAD
+=======
+        head_dim: int,
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
         ff_dim: int,
         dropout: float = 0.0,
         layer_norm_epsilon: float = 1e-12,
     ) -> None:
         super().__init__()
         self.masked_mh = MultiHeadAttention(
+<<<<<<< HEAD
             d_hidden=d_hidden, n_heads=n_heads, dropout=dropout
+=======
+            d_hidden=d_hidden, n_heads=n_heads, head_dim=head_dim, dropout=dropout
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
         )
         self.layer_norm_1 = nn.LayerNorm(d_hidden, eps=layer_norm_epsilon)
         self.ffnn = PoswiseFeedForwardNet(
@@ -212,7 +244,11 @@ class DecoderLayer(nn.Module):
     def forward(
         self,
         dec_input: Tensor,
+<<<<<<< HEAD
         dec_self_attn_mask: Tensor
+=======
+        dec_self_attn_mask: Tensor,
+>>>>>>> 5c2160421467cfbe7f2fcf628082bc4c777a65d0
     ) -> Tensor:
         masked_mh_ouput = self.masked_mh(
             dec_input, dec_input, dec_input, dec_self_attn_mask
@@ -231,6 +267,7 @@ class Decoder(nn.Module):
         d_hidden: int,
         n_layers: int,
         n_heads: int,
+        head_dim: int,
         ff_dim: int,
         max_sequence_size: int,
         padding_id: int,
@@ -245,6 +282,7 @@ class Decoder(nn.Module):
                 DecoderLayer(
                     d_hidden=d_hidden,
                     n_heads=n_heads,
+                    head_dim=head_dim,
                     ff_dim=ff_dim,
                     dropout=dropout,
                 )
@@ -254,12 +292,11 @@ class Decoder(nn.Module):
 
         self.padding_id = padding_id
 
-    def forward(self, dec_inputs: Tensor) -> Tensor:
+    def forward(self, dec_inputs: Tensor):
         position = get_position(inputs=dec_inputs)
         conb_emb = self.src_emb(dec_inputs) + self.pos_emb(
             position
         )  # Embedding + pos_enbeding : [batch_size, max_seq_size, d_hidden]
-        
         padding_mask = get_padding_mask(
             dec_inputs, self.padding_id
         )  # =>[batch_size, max_seq_size, max_seq_size]
@@ -269,7 +306,6 @@ class Decoder(nn.Module):
         dec_self_attn_mask = (
             padding_mask + look_ahead_mask
         )  # decoder 1번째 attention에 들어가는 mask
-        
         dec_outputs = conb_emb
         for layer in self.layers:
             dec_ouputs = layer(
@@ -288,8 +324,8 @@ class GPT(nn.Module):
         ff_dim: int,
         max_sequence_size: int,
         padding_id: int,
-        dropout_rate: float
-        ) -> None:
+        dropout_rate: float,
+    ) -> None:
         super().__init__()
         self.decoder = Decoder(
             input_dim=vocab_size,
@@ -301,7 +337,6 @@ class GPT(nn.Module):
             padding_id=padding_id,
             dropout=dropout_rate,
         )
-        
 
     def forward(self, dec_inputs: Tensor) -> Tensor:
         return self.decoder(dec_inputs)

@@ -1,7 +1,9 @@
 import os
 import os.path as osp
 import shutil
+
 import sentencepiece as spm
+
 
 def exist_file(path: str) -> bool:
     if osp.exists(path):
@@ -15,13 +17,12 @@ def create_or_load_tokenizer(
     language: str,
     vocab_size: int,
     tokenizer_type: str = "bpe",
-    bos_id: int = 0,
-    eos_id: int = 1,
-    unk_id: int = 2,
-    pad_id: int = 3,
+    bos_token: str = "[BOS]",
+    eos_token: str = "[EOS]",
+    unk_token: str = "[UNK]",
+    pad_token: str = "[PAD]",
 ) -> spm.SentencePieceProcessor:
     corpus_prefix = f"{language}_corpus_{vocab_size}"
-    
 
     if tokenizer_type.strip().lower() not in ["unigram", "bpe", "char", "word"]:
         raise ValueError(
@@ -35,8 +36,7 @@ def create_or_load_tokenizer(
     vocab_path = osp.join(save_path, corpus_prefix + ".vocab")
 
     if not exist_file(model_path) and not exist_file(vocab_path):
-        model_train_cmd = f"""--input={file_path} --model_prefix={corpus_prefix} --model_type={tokenizer_type} --vocab_size={vocab_size}
-         --bos_id={bos_id} --bos_piece=[BOS] --eos_id={eos_id} --eos_piece=[EOS] --unk_id={unk_id} --unk_piece=[UNK] --pad_id={pad_id} --pad_piece=[PAD]"""
+        model_train_cmd = f"--input={file_path} --model_prefix={corpus_prefix} --model_type={tokenizer_type} --vocab_size={vocab_size}  --bos_piece={bos_token}  --eos_piece={eos_token}  --unk_piece={unk_token} --pad_piece={pad_token}"
         spm.SentencePieceTrainer.Train(model_train_cmd)
         shutil.move(corpus_prefix + ".model", model_path)
         shutil.move(corpus_prefix + ".vocab", vocab_path)
