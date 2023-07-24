@@ -20,6 +20,7 @@ class AbstractModule(pl.LightningModule):
         super().__init__()
         self.arg = arg
         self.vocab = self.get_vocab()
+        self.pad_id = self.vocab.PieceToId(self.arg.model.pad_token)
         self.gpt = self.get_gpt_model()
 
     @abstractmethod
@@ -57,10 +58,10 @@ class AbstractModule(pl.LightningModule):
             language=self.arg.data.language,
             vocab_size=self.arg.data.vocab_size,
             tokenizer_type=self.arg.data.tokenizer_type,
-            bos_id=self.arg.model.bos_id,
-            eos_id=self.arg.model.eos_id,
-            unk_id=self.arg.model.unk_id,
-            pad_id=self.arg.model.pad_id,
+            bos_token=self.arg.model.bos_token,
+            eos_token=self.arg.model.eos_token,
+            unk_token=self.arg.model.unk_token,
+            pad_token=self.arg.model.pad_token,
         )
         return vocab
 
@@ -71,9 +72,9 @@ class AbstractModule(pl.LightningModule):
             "n_heads": self.arg.model.n_heads,
             "ff_dim": self.arg.model.d_hidden * 4,  # ff_dim은 d_hidden * 4이다(페이퍼)
             "n_layers": self.arg.model.n_layers,
-            "max_sequence_size": self.arg.model.max_seq_len,
+            "max_sequence_size": self.arg.model.max_seq_size,
             "dropout_rate": self.arg.model.dropout_rate,
-            "padding_id": self.arg.model.pad_id,
+            "padding_id": self.pad_id,
         }
         return GPT(**params)
 
@@ -84,7 +85,7 @@ class GPTPretrainModule(AbstractModule):
         self.model = self.get_model()
 
         self.loss_function = nn.CrossEntropyLoss(
-            ignore_index=self.arg.model.pad_id,
+            ignore_index=self.pad_id,
             label_smoothing=self.arg.trainer.label_smoothing_value,
         )
 
@@ -123,7 +124,6 @@ class GPTPretrainModule(AbstractModule):
             # TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
             output = output.to(device="cpu")
             target = target.to(device="cpu")
-
         return self.loss_function(output.view(-1, output.size(2)), target.view(-1))
 
     def get_model(self) -> nn.Module:

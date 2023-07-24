@@ -48,21 +48,21 @@ def get_model_n_data_module(cfg) -> Tuple[pl.LightningModule, pl.LightningDataMo
     return module, data_module
 
 
-@hydra.main(version_base="1.3.2", config_path="configs", config_name="classification")
+@hydra.main(version_base="1.3.2", config_path="configs", config_name="pretrain")
 def train(cfg: DictConfig) -> None:
     callback_lst = []
     module, data_module = get_model_n_data_module(cfg)
 
-    if cfg.data.task == "pretrain":
-        selected_layer_checkpoint_callback = SelectedLayerCheckpoint()
-        callback_lst.append(selected_layer_checkpoint_callback)
+    # if cfg.data.task == "pretrain":
+    #     selected_layer_checkpoint_callback = SelectedLayerCheckpoint()
+    #     callback_lst.append(selected_layer_checkpoint_callback)
 
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=os.path.join(
-            get_original_cwd(), f"./SavedModel/{cfg.data.folder_name}"
+            get_original_cwd(), f"./SavedModel/{cfg.data.dataset_name}"
         ),
-        filename=cfg.data.folder_name,
+        filename=cfg.data.dataset_name,
         save_top_k=5,
         verbose=True,
         monitor="val_loss",
@@ -75,8 +75,8 @@ def train(cfg: DictConfig) -> None:
         verbose=False,
         mode="min",
     )
-    callback_lst.append(checkpoint_callback, early_stop_callback)
-    # wandb_logger = WandbLogger(project=cfg.data.project_name, name=cfg.data.folder_name)
+    callback_lst += [checkpoint_callback, early_stop_callback]
+    # wandb_logger = WandbLogger(project=cfg.data.project_name, name=cfg.data.dataset_name)
     # wandb_logger.log_hyperparams(make_config(cfg))
 
     trainer = Trainer(

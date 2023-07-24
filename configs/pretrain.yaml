@@ -1,4 +1,4 @@
-pretrain:
+defaults:
   - data: pretrain
   - model: pretrain
   - trainer: pretrain

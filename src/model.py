@@ -101,14 +101,14 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
         assert d_hidden // n_heads != 0
         head_dim = int(d_hidden / n_heads)
-        self.weight_q = nn.Linear(d_hidden, d_hidden)
-        self.weight_k = nn.Linear(d_hidden, d_hidden)
-        self.weight_v = nn.Linear(d_hidden, d_hidden)
+        self.weight_q = nn.Linear(d_hidden, n_heads * head_dim)
+        self.weight_k = nn.Linear(d_hidden, n_heads * head_dim)
+        self.weight_v = nn.Linear(d_hidden, n_heads * head_dim)
 
         self.self_attention = ScaledDotProductAttention(
             head_dim=head_dim, dropout_rate=dropout
         )
-        self.linear = nn.Linear(d_hidden, d_hidden)
+        self.linear = nn.Linear(n_heads * head_dim, d_hidden)
 
         self.dropout = nn.Dropout(dropout)
         self.n_heads = n_heads
@@ -190,14 +190,13 @@ class DecoderLayer(nn.Module):
         self,
         d_hidden: int,
         n_heads: int,
-        head_dim: int,
         ff_dim: int,
         dropout: float = 0.0,
         layer_norm_epsilon: float = 1e-12,
     ) -> None:
         super().__init__()
         self.masked_mh = MultiHeadAttention(
-            d_hidden=d_hidden, n_heads=n_heads, head_dim=head_dim, dropout=dropout
+            d_hidden=d_hidden, n_heads=n_heads, dropout=dropout
         )
         self.layer_norm_1 = nn.LayerNorm(d_hidden, eps=layer_norm_epsilon)
         self.ffnn = PoswiseFeedForwardNet(
@@ -227,7 +226,6 @@ class Decoder(nn.Module):
         d_hidden: int,
         n_layers: int,
         n_heads: int,
-        head_dim: int,
         ff_dim: int,
         max_sequence_size: int,
         padding_id: int,
@@ -242,7 +240,6 @@ class Decoder(nn.Module):
                 DecoderLayer(
                     d_hidden=d_hidden,
                     n_heads=n_heads,
-                    head_dim=head_dim,
                     ff_dim=ff_dim,
                     dropout=dropout,
                 )

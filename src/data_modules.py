@@ -7,7 +7,7 @@ from lightning.pytorch.utilities.types import (EVAL_DATALOADERS,
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader, RandomSampler
 
-from src.dataset import GPTPretrainDataset, NaverClassifcationDataset
+from src.datasets import GPTPretrainDataset, NaverClassificationDataset
 
 
 class AbstractDataModule(pl.LightningDataModule):
@@ -22,7 +22,7 @@ class AbstractDataModule(pl.LightningDataModule):
         self.arg_data = arg_data
         self.arg_model = arg_model
         self.vocab = vocab
-        self.max_seq_len = arg_model.max_seq_len
+        self.max_seq_size = arg_model.max_seq_size
         self.batch_size = batch_size
         self.train_dataset, self.valid_dataset = None, None
 
@@ -76,21 +76,23 @@ class PretrainDataModule(AbstractDataModule):
         self.train_dataset = GPTPretrainDataset(
             file_path=self.arg_data.train_path,
             vocab=self.vocab,
-            max_seq_len=self.max_seq_len,
+            max_seq_size=self.max_seq_size,
             bos_token=self.arg_model.bos_token,
             eos_token=self.arg_model.eos_token,
             unk_token=self.arg_model.unk_token,
             pad_token=self.arg_model.pad_token,
+            delim_token=self.arg_model.delim_token,
         )
 
         self.valid_dataset = GPTPretrainDataset(
             file_path=self.arg_data.valid_path,
             vocab=self.vocab,
-            max_seq_len=self.max_seq_len,
+            max_seq_size=self.max_seq_size,
             bos_token=self.arg_model.bos_token,
             eos_token=self.arg_model.eos_token,
             unk_token=self.arg_model.unk_token,
             pad_token=self.arg_model.pad_token,
+            delim_token=self.arg_model.delim_token,
         )
 
 
@@ -110,19 +112,21 @@ class NaverClassificationDataModule(AbstractDataModule):
         self.train_dataset = NaverClassifcationDataset(
             file_path=self.arg_data.train_path,
             vocab=self.vocab,
-            max_seq_len=self.max_seq_len,
+            max_seq_size=self.max_seq_size,
             bos_token=self.arg_model.bos_token,
             eos_token=self.arg_model.eos_token,
             unk_token=self.arg_model.unk_token,
             pad_token=self.arg_model.pad_token,
+            delim_token=self.arg_model.delim_token,
         )
 
         self.valid_dataset = NaverClassifcationDataset(
             file_path=self.arg_data.valid_path,
             vocab=self.vocab,
-            max_seq_len=self.max_seq_len,
+            max_seq_size=self.max_seq_size,
             bos_token=self.arg_model.bos_token,
             eos_token=self.arg_model.eos_token,
             unk_token=self.arg_model.unk_token,
             pad_token=self.arg_model.pad_token,
+            delim_token=self.arg_model.delim_token,
         )

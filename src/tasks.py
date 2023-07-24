@@ -20,7 +20,7 @@ class GPTPretrain(nn.Module):
     def forward(self, dec_inputs: Tensor) -> Tensor:
         dec_outputs = self.gpt(dec_inputs)  # -> [bs, max_seq_size, d_hidden]
         logit_lm = self.transpose_embedding(dec_outputs)  # -> [bs, max_seq_size, vocab]
-        return logit_lm  # -> [bs, max_seq_size, vocab_size]
+        return logit_lm[:, :-1, :].contiguous()  # -> [bs, max_seq_size-1, vocab_size]
 
 
 class NaverClassification(nn.Module):
