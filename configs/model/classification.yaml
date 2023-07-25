@@ -3,7 +3,7 @@ max_seq_size: 512
 d_hidden: 256 # paper에는 768
 n_layers: 6  # paper에는 12 
 n_heads: 12
-n_ouputs: 2
+n_outputs: 2
 dropout_rate: 0.3
 
 bos_token: "[BOS]"

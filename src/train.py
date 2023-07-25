@@ -9,9 +9,8 @@ from omegaconf import DictConfig
 from torch import Tensor
 from torch.optim import Optimizer
 
-from src.data_modules import NaverClassificationDataModule
 from src.model import GPT
-from src.tasks import GPTPretrain
+from src.tasks import GPTPretrain, GPTClassification
 from src.utils import create_or_load_tokenizer
 
 
@@ -62,6 +61,7 @@ class AbstractModule(pl.LightningModule):
             eos_token=self.arg.model.eos_token,
             unk_token=self.arg.model.unk_token,
             pad_token=self.arg.model.pad_token,
+            delim_token=self.arg.model.delim_token,
         )
         return vocab
 
@@ -137,10 +137,10 @@ class GPTPretrainModule(AbstractModule):
 class NaverClassificationModule(AbstractModule):
     def __init__(self, arg: DictConfig) -> None:
         super().__init__(arg)
-        self.model = self.get_model()
         self.pretrain_path = arg.data.pretrain_path
+        self.model = self.get_model()
         self.loss_function = nn.CrossEntropyLoss(
-            ignore_index=self.arg.model.pad_id,
+            ignore_index=self.pad_id,
             label_smoothing=self.arg.trainer.label_smoothing_value,
         )
 
@@ -181,8 +181,15 @@ class NaverClassificationModule(AbstractModule):
         return self.loss_function(output, target)
 
     def get_model(self) -> nn.Module:
-        self.gpt.load_state_dict(torch.load(self.pretrain_path)["state_dict"])
-        return NaverClassificationDataModule(
+        gpt_pretrain = GPTPretrain(
+            gpt_model=self.gpt,
+            vocab_size=self.arg.data.vocab_size,
+            d_hidden=self.arg.model.d_hidden,
+        )
+        gpt_pretrain.load_state_dict(torch.load(self.pretrain_path)["state_dict"], strict=False)
+        self.gpt = gpt_pretrain.gpt 
+        del gpt_pretrain
+        return GPTClassification(
             gpt_model=self.gpt,
             d_hidden=self.arg.model.d_hidden,
             n_outputs=self.arg.model.n_outputs,

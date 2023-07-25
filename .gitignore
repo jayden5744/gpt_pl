@@ -165,3 +165,4 @@ dictionary/
 lightning_logs
 outputs
 wandb
+*.ipynb

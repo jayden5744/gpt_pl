@@ -37,7 +37,7 @@ def create_or_load_tokenizer(
     vocab_path = osp.join(save_path, corpus_prefix + ".vocab")
 
     if not exist_file(model_path) and not exist_file(vocab_path):
-        model_train_cmd = f"--input={file_path} --model_prefix={corpus_prefix} --model_type={tokenizer_type} --vocab_size={vocab_size}  --bos_piece={bos_token}  --eos_piece={eos_token}  --unk_piece={unk_token} --pad_piece={pad_token} --user_defined_symbols={delim_token}"
+        model_train_cmd = f"--input={file_path} --model_prefix={corpus_prefix} --model_type={tokenizer_type} --vocab_size={vocab_size}  --bos_piece={bos_token}  --eos_piece={eos_token}  --unk_piece={unk_token} --pad_id={3} --pad_piece={pad_token} --user_defined_symbols={delim_token}"
         spm.SentencePieceTrainer.Train(model_train_cmd)
         shutil.move(corpus_prefix + ".model", model_path)
         shutil.move(corpus_prefix + ".vocab", vocab_path)

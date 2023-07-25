@@ -93,7 +93,12 @@ class NaverClassificationDataset(AbstractDataset):
         self.sentences, self.labels =  self.load_txt_file(file_path)
 
     def __getitem__(self, index: int):
-        doc = self.vocab.EncodeAsIds(self.sentences[index])
+        try:
+            doc = self.vocab.EncodeAsIds(self.sentences[index])
+        except TypeError as e:
+            print("sentences : ", self.sentences[index])
+            raise e
+        
         if len(doc) + 2 > self.max_seq_size:
             doc = doc[:self.max_seq_size - 2]
         return torch.tensor([self.bos_id] + doc + [self.eos_id] + [self.pad_id] * (self.max_seq_size - 2 - len(doc))), torch.tensor(self.labels[index])
@@ -111,9 +116,16 @@ class NaverClassificationDataset(AbstractDataset):
         sentences = []
         labels = []
         for i, row in df.iterrows():
+            sentence = str(row["document"]).strip()
+            try:
+                self.vocab.EncodeAsIds(sentence)
+
+            except TypeError as e:
+                continue
             labels.append(row["label"])
-            sentences.append(row["document"])
+            sentences.append(sentence)
         return sentences, labels
 
+    
 
 

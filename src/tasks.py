@@ -23,7 +23,7 @@ class GPTPretrain(nn.Module):
         return logit_lm[:, :-1, :].contiguous()  # -> [bs, max_seq_size-1, vocab_size]
 
 
-class NaverClassification(nn.Module):
+class GPTClassification(nn.Module):
     def __init__(self, gpt_model: GPT, d_hidden: int, n_outputs: int) -> None:
         super().__init__()
         self.gpt = gpt_model
@@ -33,3 +33,18 @@ class NaverClassification(nn.Module):
         dec_outputs = self.gpt(dec_inputs)  # -> [bs, max_seq_size, d_hidden]
         dec_outputs = dec_outputs[:, -1].contiguous()  # -> [bs, d_hidden], 마지막 토큰의 output을 사용해서 분류 
         return self.project_cls(dec_outputs)  # -> [bs, n_outputs]
+
+
+class GPTSimilarity(nn.Module):
+    def __init__(self, gpt_model: GPT, d_hidden: int, n_outputs: int = 2):
+        super().__init__()
+        self.gpt = gpt_model
+        self.project_cls = nn.Linear(d_hidden, n_outputs, bias=False)
+
+    def forward(self, first_sentence:Tensor, second_sentence: Tensor) -> Tensor:
+        first_tensor = self.gpt(first_sentence)
+        second_tensor = self.gpt(second_sentence)
+        dec_output = first_tensor + second_sentence
+        dec_outputs = dec_outputs[:, -1].contiguous()  # -> [bs, d_hidden]
+        return self.project_cls(dec_outputs)  # -> [bs, n_outputs]
+

@@ -109,7 +109,7 @@ class NaverClassificationDataModule(AbstractDataModule):
     def setup(self, stage: str) -> None:
         # make assignments here (train/val/test split)
         # called on every process in DDP(distributed data parallel)
-        self.train_dataset = NaverClassifcationDataset(
+        self.train_dataset = NaverClassificationDataset(
             file_path=self.arg_data.train_path,
             vocab=self.vocab,
             max_seq_size=self.max_seq_size,
@@ -120,7 +120,7 @@ class NaverClassificationDataModule(AbstractDataModule):
             delim_token=self.arg_model.delim_token,
         )
 
-        self.valid_dataset = NaverClassifcationDataset(
+        self.valid_dataset = NaverClassificationDataset(
             file_path=self.arg_data.valid_path,
             vocab=self.vocab,
             max_seq_size=self.max_seq_size,

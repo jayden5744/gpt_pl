@@ -10,7 +10,6 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
-from src.callbacks import SelectedLayerCheckpoint
 
 from src.data_modules import NaverClassificationDataModule, PretrainDataModule
 from src.train import GPTPretrainModule, NaverClassificationModule
@@ -52,11 +51,6 @@ def get_model_n_data_module(cfg) -> Tuple[pl.LightningModule, pl.LightningDataMo
 def train(cfg: DictConfig) -> None:
     callback_lst = []
     module, data_module = get_model_n_data_module(cfg)
-
-    # if cfg.data.task == "pretrain":
-    #     selected_layer_checkpoint_callback = SelectedLayerCheckpoint()
-    #     callback_lst.append(selected_layer_checkpoint_callback)
-
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=os.path.join(
