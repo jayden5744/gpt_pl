@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 SavedModel/
-data
+data/*
 dictionary/
 lightning_logs
 outputs

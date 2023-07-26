@@ -1,0 +1,15 @@
+project_name: "gpt_scratch"
+dataset_name: "pretrain"
+task: "pretrain"
+
+language: "ko"
+
+train_path: "data/${data.dataset_name}/train.txt"
+valid_path: "data/${data.dataset_name}/valid.txt"
+
+tokenizer_type: "bpe" # coice of [unigram, bpe, char, word]
+
+dictionary_path: "dictionary/${data.dataset_name}"
+model_path: "SavedModel/${data.project_name}/${data.dataset_name}"
+
+vocab_size: 30000 # 30000 # 논문에서는 4만
