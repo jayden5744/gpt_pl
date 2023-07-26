@@ -34,6 +34,16 @@ class GPTClassification(nn.Module):
         dec_outputs = dec_outputs[:, -1].contiguous()  # -> [bs, d_hidden], 마지막 토큰의 output을 사용해서 분류 
         return self.project_cls(dec_outputs)  # -> [bs, n_outputs]
 
+    def generate(self, dec_inputs: Tensor):
+        model.eval()
+        dec_outputs = self.gpt(dec_inputs)  # -> [bs, max_seq_size, d_hidden]
+        dec_outputs = dec_outputs[:, -1].contiguous()
+        logits = self.project_cls(dec_outputs)
+        logit_probs = nn.functional.softmax(logits, dim=-1)
+        print(logit_probs)
+
+
+
 
 class GPTSimilarity(nn.Module):
     def __init__(self, gpt_model: GPT, d_hidden: int, n_outputs: int = 2):
